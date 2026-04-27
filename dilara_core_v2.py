@@ -721,10 +721,19 @@ class RSSService:
 
 
 class SearchService:
+    """
+    Multi-engine fallback search: Google -> Bing -> DuckDuckGo -> Brave.
+    Each engine has its own fetch + parse pair.
+    The worker tries them in order and stops at the first that yields results.
+    """
     MAX_RESULTS = 5
+
+    # Rotate a few realistic User-Agent strings to reduce bot detection
     _UA_POOL = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
         "Mozilla/5.0 (X11; Linux x86_64; rv:125.0) Gecko/20100101 Firefox/125.0",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
     ]
 
     @staticmethod
@@ -733,70 +742,161 @@ class SearchService:
             "User-Agent": random.choice(SearchService._UA_POOL),
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "identity", "DNT": "1",
+            "Accept-Encoding": "identity",
+            "DNT": "1",
         }
 
     @staticmethod
-    def extract_query(user_input):
+    def extract_query(user_input: str) -> str:
         q = user_input.lower()
-        for t in ("search for","search","google","look up","find","bing","duck","brave"):
-            if t in q:
-                q = q[q.index(t)+len(t):].strip(); break
+        for trigger in ("search for", "search", "google", "look up", "find", "bing", "duck", "brave"):
+            if trigger in q:
+                q = q[q.index(trigger) + len(trigger):].strip()
+                break
         return q or user_input
 
+    # ------------------------------------------------------------------ Google
     @staticmethod
-    def _fetch(url):
+    def _fetch_google(query: str) -> str:
+        enc = urllib.parse.quote_plus(query)
+        url = f"https://www.google.com/search?q={enc}&num=10&hl=en&gl=us"
         req = urllib.request.Request(url, headers=SearchService._headers())
         with urllib.request.urlopen(req, timeout=8) as r:
             return r.read().decode("utf-8", errors="replace")
 
     @staticmethod
-    def _parse_google(html_text):
+    def _parse_google(html_text: str):
         results = []
-        for m in re.finditer(
+        pattern = re.compile(
             r'<a[^>]+href="/url\?q=([^"&]+)[^"]*"[^>]*>.*?<h3[^>]*>(.*?)</h3>',
-            html_text, re.DOTALL
-        ):
+            re.DOTALL
+        )
+        for m in pattern.finditer(html_text):
             url   = urllib.parse.unquote(m.group(1))
-            title = html_lib.unescape(re.sub(r"<[^>]+>","",m.group(2)).strip())
+            title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+            title = html_lib.unescape(title)
             if url.startswith("http") and title:
                 results.append((title, url))
-            if len(results) >= SearchService.MAX_RESULTS: break
+            if len(results) >= SearchService.MAX_RESULTS:
+                break
         return results
+
+    # ------------------------------------------------------------------ Bing
+    @staticmethod
+    def _fetch_bing(query: str) -> str:
+        enc = urllib.parse.quote_plus(query)
+        url = f"https://www.bing.com/search?q={enc}&count=10&setlang=en"
+        req = urllib.request.Request(url, headers=SearchService._headers())
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return r.read().decode("utf-8", errors="replace")
 
     @staticmethod
-    def _parse_ddg(html_text):
+    def _parse_bing(html_text: str):
         results = []
-        for m in re.finditer(
-            r'<a[^>]+class="result__a"[^>]+href="//duckduckgo\.com/l/\?uddg=([^"&]+)[^"]*"[^>]*>(.*?)</a>',
-            html_text, re.DOTALL
-        ):
-            url   = urllib.parse.unquote(m.group(1))
-            title = html_lib.unescape(re.sub(r"<[^>]+>","",m.group(2)).strip())
-            if url.startswith("http") and title:
+        pattern = re.compile(
+            r'<h2[^>]*>\s*<a[^>]+href="(https?://[^"]+)"[^>]*>(.*?)</a>',
+            re.DOTALL
+        )
+        skip = {"bing.com", "microsoft.com", "msn.com"}
+        for m in pattern.finditer(html_text):
+            url   = m.group(1).strip()
+            title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+            title = html_lib.unescape(title)
+            if url.startswith("http") and title and not any(s in url for s in skip):
                 results.append((title, url))
-            if len(results) >= SearchService.MAX_RESULTS: break
+            if len(results) >= SearchService.MAX_RESULTS:
+                break
         return results
 
+    # ------------------------------------------------------------------ DuckDuckGo (HTML endpoint)
+    @staticmethod
+    def _fetch_ddg(query: str) -> str:
+        enc = urllib.parse.quote_plus(query)
+        url = f"https://html.duckduckgo.com/html/?q={enc}&kl=us-en"
+        req = urllib.request.Request(url, headers=SearchService._headers())
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return r.read().decode("utf-8", errors="replace")
+
+    @staticmethod
+    def _parse_ddg(html_text: str):
+        results = []
+        pattern = re.compile(
+            r'<a[^>]+class="result__a"[^>]+href="//duckduckgo\.com/l/\?uddg=([^"&]+)[^"]*"[^>]*>(.*?)</a>',
+            re.DOTALL
+        )
+        for m in pattern.finditer(html_text):
+            url   = urllib.parse.unquote(m.group(1))
+            title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+            title = html_lib.unescape(title)
+            if url.startswith("http") and title:
+                results.append((title, url))
+            if len(results) >= SearchService.MAX_RESULTS:
+                break
+        return results
+
+    # ------------------------------------------------------------------ Brave
+    @staticmethod
+    def _fetch_brave(query: str) -> str:
+        enc = urllib.parse.quote_plus(query)
+        url = f"https://search.brave.com/search?q={enc}&source=web"
+        headers = SearchService._headers()
+        headers["Accept"] = "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8"
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=8) as r:
+            return r.read().decode("utf-8", errors="replace")
+
+    @staticmethod
+    def _parse_brave(html_text: str):
+        results = []
+        pattern = re.compile(
+            r'<a[^>]+href="(https?://[^"]+)"[^>]*class="[^"]*result-header[^"]*"[^>]*>(.*?)</a>',
+            re.DOTALL
+        )
+        skip = {"brave.com"}
+        for m in pattern.finditer(html_text):
+            url   = m.group(1).strip()
+            title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+            title = html_lib.unescape(title)
+            if url.startswith("http") and title and not any(s in url for s in skip):
+                results.append((title, url))
+            if len(results) >= SearchService.MAX_RESULTS:
+                break
+        return results
+
+    # ------------------------------------------------------------------ Unified entry point
     ENGINES = [
-        ("Google",     lambda q: SearchService._fetch(f"https://www.google.com/search?q={urllib.parse.quote_plus(q)}&num=10&hl=en"),     SearchService._parse_google),
-        ("DuckDuckGo", lambda q: SearchService._fetch(f"https://html.duckduckgo.com/html/?q={urllib.parse.quote_plus(q)}&kl=us-en"),     SearchService._parse_ddg),
+        ("Google",     _fetch_google.__func__,  _parse_google.__func__),
+        ("Bing",       _fetch_bing.__func__,     _parse_bing.__func__),
+        ("DuckDuckGo", _fetch_ddg.__func__,      _parse_ddg.__func__),
+        ("Brave",      _fetch_brave.__func__,    _parse_brave.__func__),
     ]
 
     @staticmethod
-    def search(query):
+    def search(query: str):
+        """
+        Try each engine in order. Returns (engine_name, results_list).
+        Results list is empty only if ALL engines fail.
+        """
+        errors = []
         for name, fetch_fn, parse_fn in SearchService.ENGINES:
             try:
-                items = parse_fn(fetch_fn(query))
-                if items: return name, items
+                html_text = fetch_fn(query)
+                items     = parse_fn(html_text)
+                if items:
+                    return name, items
+                errors.append(f"{name}: 0 results")
             except Exception as e:
-                print(f"[Search] {name}: {e}")
+                errors.append(f"{name}: {e}")
+                continue
         return None, []
 
     @staticmethod
     def format_result(engine_name, items, query):
         if not items:
-            return f"[Search] No results for: '{query}'"
+            return (
+                f"[Search] All engines returned nothing for: '{query}'\n"
+                "  Possible causes: no internet, all engines blocked, or very rare query."
+            )
         lines = [f"[ {engine_name}: {query} ]", ""]
         for i, (title, url) in enumerate(items, 1):
             lines.append(f"  {i}. {title}")
