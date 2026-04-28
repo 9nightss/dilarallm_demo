@@ -448,7 +448,7 @@ class VoiceManager:
 #  DIALOG BASE  (v1 personality — unchanged)
 # ─────────────────────────────────────────────
 
-#TODO: RESPONSES ARE MAİNLY WEAK THOSE ARE NEEDS TO BE THİNK ON İT AND SHOULD BE MORE NATURAL DİALOG BASED
+#TODO:These hardcoded responses are weak we need to think on it and make them more natural dialog responses qqqqw
 
 class DialogBase:
     """Keyword-intent router. Returns {"text": str, "intent": Optional[str]}"""
@@ -459,6 +459,8 @@ class DialogBase:
             "Remember: in a sea of algorithms, stay curious.",
             "Ah, another day in the simulation. Let's make it glitch beautifully.",
             f"Welcome back, {username}. Systems nominal. Coffee optional.",
+            "The network is buzzing. Let's see what we can break... I.. I mean, fix today.",
+            ""
         ]
         self.responses = {
             ("hi", "hello", "greetings", "howdy", "hey"): {
@@ -509,10 +511,10 @@ class DialogBase:
                          "Pulling headlines now."],
                 "intent": "news_general"
             },
-            ("tech news", "technology news", "gadgets", "tech headlines"): { #RSS FEED İS NEEDS TO BE RECHECKED 
+            ("tech news", "technology news", "gadgets", "tech headlines"): { #DONE: RSS FEED İS NEEDS TO BE RECHECKED 
                 "text": ["Tech stream incoming."], "intent": "news_tech"
             },
-            ("cybersecurity", "hacker news", "security news", "infosec"): { #THOSE ARE NOT THE SİTES WE SELECTED NEEDS TO BE FİXED
+            ("cybersecurity", "hacker news", "security news", "infosec"): { #DONE: THOSE ARE NOT THE SİTES WE SELECTED NEEDS TO BE FİXED
                 "text": ["Threat intel channels warming up."], "intent": "news_security"
             },
             ("world news", "international", "global news"): {
@@ -533,7 +535,7 @@ class DialogBase:
             ("navigation", "guide me", "ok, lead me", "lead me", "navigate"): {
                 "text": ["Navigation mode armed. Destination?"], "intent": "navigation"
             },
-            ("scan", "scanner", "trace", "nmap", "whois"): {  #TODO: Fill this with toolsets on the net edc folder
+            ("scan", "scanner", "trace", "nmap", "whois"): {  #TODO: Fill this with the toolsets on the net edc folder
                 "text": ["Scan center is an external tool in later stages. Prepping logs."], 
                 "intent": "scan_external"
             },
@@ -593,6 +595,14 @@ class DialogBase:
                     "Another rotation around the star. Let's make it count.",
                 ]
             },
+
+        ("who is admin", "admin", "who am i" ): {
+
+                "text": [ f" Admin is {Admin}"
+
+
+                ],
+        },
             ("exit", "quit", "bye", "shutdown", "close"): {
                 "text": [
                     "Powering down. Don't be a stranger.",
@@ -691,8 +701,119 @@ class RSSService:
                      ("Threatpost","https://threatpost.com/feed/")],
         "world":    [("Reuters World","https://feeds.reuters.com/reuters/worldNews"),
                      ("Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml")],
+
+        "Turkey general": [
+            ("NTV Gündem", "https://www.ntv.com.tr/gundem.rss"),
+            ("NTV Türkiye", "https://www.ntv.com.tr/turkiye.rss"),
+            ("AA Güncel", "https://www.aa.com.tr/tr/rss/default?cat=guncel"),
+            ("Anayurt Son Dakika", "http://www.anayurtgazetesi.com/sondakika.xml"),
+            ("Cumhuriyet Son Dakika", "http://www.cumhuriyet.com.tr/rss/son_dakika.xml"),
+            ("Cumhuriyet Siyaset", "http://www.cumhuriyet.com.tr/rss/73.xml"),
+            ("Habertürk", "http://www.haberturk.com/rss"),
+            ("Hürriyet Anasayfa", "http://www.hurriyet.com.tr/rss/anasayfa"),
+            ("Hürriyet Gündem", "http://www.hurriyet.com.tr/rss/gundem"),
+            ("Milat Gazetesi", "http://www.milatgazetesi.com/rss.php"),
+            ("Milliyet Gündem", "http://www.milliyet.com.tr/rss/rssNew/gundemRss.xml"),
+            ("Milliyet Siyaset", "http://www.milliyet.com.tr/rss/rssNew/siyasetRss.xml"),
+            ("Milliyet Son Dakika", "http://www.milliyet.com.tr/rss/rssNew/SonDakikaRss.xml"),
+            ("Sabah Gündem", "https://www.sabah.com.tr/rss/gundem.xml"),
+            ("Sabah Anasayfa", "https://www.sabah.com.tr/rss/anasayfa.xml"),
+            ("Sabah Son Dakika", "https://www.sabah.com.tr/rss/sondakika.xml"),
+            ("Star Gazetesi", "http://www.star.com.tr/rss/rss.asp"),
+            ("Takvim Güncel", "https://www.takvim.com.tr/rss/guncel.xml"),
+            ("Türkiye Gazetesi", "http://www.turkiyegazetesi.com.tr/rss/rss.xml"),
+            ("Vatan Gazetesi", "http://mix.chimpfeedr.com/68482-Vatan-Gazetesi"),
+            ("Yeni Akit Gündem", "https://www.yeniakit.com.tr/rss/haber/gundem"),
+            ("Yeni Akit Siyaset", "https://www.yeniakit.com.tr/rss/haber/siyaset"),
+            ("Yeni Şafak Gündem", "https://www.yenisafak.com/rss?xml=gundem"),
+            ("A Haber Gündem", "https://www.ahaber.com.tr/rss/gundem.xml"),
+            ("CNN Türk Türkiye", "https://www.cnnturk.com/feed/rss/turkiye/news"),
+            ("TRT Haber Son Dakika", "http://www.trthaber.com/sondakika.rss"),
+            ("BBC Türkçe", "http://feeds.bbci.co.uk/turkce/rss.xml"),
+            ("DW Türkçe", "http://rss.dw.com/rdf/rss-tur-all"),
+            ("Mynet Politika", "http://www.mynet.com/haber/rss/kategori/politika/"),
+            ("Sputnik Türkiye", "https://tr.sputniknews.com/export/rss2/archive/index.xml")
+        ],
+        "tech": [
+            ("NTV Teknoloji", "https://www.ntv.com.tr/teknoloji.rss"),
+            ("Cumhuriyet Teknoloji", "http://www.cumhuriyet.com.tr/rss/35.xml"),
+            ("Cumhuriyet Bilim", "http://www.cumhuriyet.com.tr/rss/12.xml"),
+            ("Hürriyet Teknoloji", "http://www.hurriyet.com.tr/rss/teknoloji"),
+            ("Milliyet Teknoloji", "http://www.milliyet.com.tr/rss/rssNew/teknolojiRss.xml"),
+            ("Sabah Teknoloji", "https://www.sabah.com.tr/rss/teknoloji.xml"),
+            ("Sabah Oyun", "https://www.sabah.com.tr/rss/oyun.xml"),
+            ("Yeni Akit Teknoloji", "https://www.yeniakit.com.tr/rss/haber/teknoloji"),
+            ("Yeni Şafak Teknoloji", "https://www.yenisafak.com/rss?xml=teknoloji"),
+            ("A Haber Teknoloji", "https://www.ahaber.com.tr/rss/teknoloji.xml"),
+            ("CNN Türk Bilim Teknoloji", "https://www.cnnturk.com/feed/rss/bilim-teknoloji/news"),
+            ("Mynet Teknoloji", "http://www.mynet.com/haber/rss/kategori/teknoloji/")
+        ],
+        "economy": [
+            ("NTV Ekonomi", "https://www.ntv.com.tr/ekonomi.rss"),
+            ("Cumhuriyet Ekonomi", "http://www.cumhuriyet.com.tr/rss/17.xml"),
+            ("Dünya Gazetesi", "https://www.dunya.com/rss?dunya"),
+            ("Hürriyet Ekonomi", "http://www.hurriyet.com.tr/rss/ekonomi"),
+            ("Milliyet Ekonomi", "http://www.milliyet.com.tr/rss/rssNew/ekonomiRss.xml"),
+            ("Milliyet Emlak", "http://www.milliyet.com.tr/rss/rssNew/konutemlakRss.xml"),
+            ("Sabah Ekonomi", "https://www.sabah.com.tr/rss/ekonomi.xml"),
+            ("Takvim Ekonomi", "https://www.takvim.com.tr/rss/ekonomi.xml"),
+            ("Yeni Akit Ekonomi", "https://www.yeniakit.com.tr/rss/haber/ekonomi"),
+            ("A Haber Ekonomi", "https://www.ahaber.com.tr/rss/ekonomi.xml"),
+            ("CNN Türk Ekonomi", "https://www.cnnturk.com/feed/rss/ekonomi/news"),
+            ("Finans Gündem", "http://www.finansgundem.com/rss"),
+            ("Bigpara", "http://bigpara.hurriyet.com.tr/rss/"),
+            ("TOBB Haberler", "https://www.tobb.org.tr/Sayfalar/RssFeeder.php?List=Haberler")
+        ],
+        "world": [
+            ("NTV Dünya", "https://www.ntv.com.tr/dunya.rss"),
+            ("Cumhuriyet Dünya", "http://www.cumhuriyet.com.tr/rss/6.xml"),
+            ("Hürriyet Dünya", "http://www.hurriyet.com.tr/rss/dunya"),
+            ("Milliyet Dünya", "http://www.milliyet.com.tr/rss/rssNew/dunyaRss.xml"),
+            ("Sabah Dünya", "https://www.sabah.com.tr/rss/dunya.xml"),
+            ("Yeni Akit Dünya", "https://www.yeniakit.com.tr/rss/haber/dunya"),
+            ("Yeni Şafak Dünya", "https://www.yenisafak.com/rss?xml=dunya"),
+            ("A Haber Dünya", "https://www.ahaber.com.tr/rss/dunya.xml"),
+            ("CNN Türk Dünya", "https://www.cnnturk.com/feed/rss/dunya/news"),
+            ("Mynet Dünya", "http://www.mynet.com/haber/rss/kategori/dunya/")
+        ],
+        "sports": [
+            ("NTV Spor", "https://www.ntv.com.tr/spor.rss"),
+            ("Hürriyet Spor", "http://www.hurriyet.com.tr/rss/spor"),
+            ("Sabah Spor", "https://www.sabah.com.tr/rss/spor.xml"),
+            ("Sabah Galatasaray", "https://www.sabah.com.tr/rss/galatasaray.xml"),
+            ("Sabah Fenerbahçe", "https://www.sabah.com.tr/rss/fenerbahce.xml"),
+            ("Sabah Beşiktaş", "https://www.sabah.com.tr/rss/besiktas.xml"),
+            ("Takvim Spor", "https://www.takvim.com.tr/rss/spor.xml"),
+            ("Yeni Şafak Spor", "https://www.yenisafak.com/rss?xml=spor"),
+            ("A Haber Spor", "https://www.ahaber.com.tr/rss/spor.xml"),
+            ("CNN Türk Spor", "https://www.cnnturk.com/feed/rss/spor/news"),
+            ("Mynet Spor", "http://spor.mynet.com/rss")
+        ],
+        "lifestyle": [
+            ("NTV Yaşam", "https://www.ntv.com.tr/yasam.rss"),
+            ("NTV Sağlık", "https://www.ntv.com.tr/saglik.rss"),
+            ("Hürriyet Magazin", "http://www.hurriyet.com.tr/rss/magazin"),
+            ("Hürriyet Sağlık", "http://www.hurriyet.com.tr/rss/saglik"),
+            ("Milliyet Magazin", "http://www.milliyet.com.tr/rss/rssNew/magazinRss.xml"),
+            ("Milliyet Sağlık", "http://www.milliyet.com.tr/rss/rssNew/saglikRss.xml"),
+            ("Sabah Yaşam", "https://www.sabah.com.tr/rss/yasam.xml"),
+            ("Sabah Sağlık", "https://www.sabah.com.tr/rss/saglik.xml"),
+            ("CNN Türk Magazin", "https://www.cnnturk.com/feed/rss/magazin/news"),
+            ("Mynet Magazin", "https://www.mynet.com/magazin/rss"),
+            ("Yeni Şafak Hayat", "https://www.yenisafak.com/rss?xml=hayat")
+        ],
+        "automotive": [
+            ("NTV Otomobil", "https://www.ntv.com.tr/otomobil.rss"),
+            ("Milliyet Otomobil", "http://www.milliyet.com.tr/rss/rssNew/otomobilRss.xml"),
+            ("Sabah Otomobil", "https://www.sabah.com.tr/rss/otomobil.xml"),
+            ("Takvim Otomobil", "https://www.takvim.com.tr/rss/otomobil.xml"),
+            ("Yeni Akit Otomotiv", "https://www.yeniakit.com.tr/rss/haber/otomotiv"),
+            ("A Haber Otomobil", "https://www.ahaber.com.tr/rss/otomobil.xml"),
+            ("CNN Türk Otomobil", "https://www.cnnturk.com/feed/rss/otomobil/news")
+        ]
+
     }
-    MAX_ITEMS = 6
+    MAX_ITEMS = 16
 
     @staticmethod
     def fetch(category="general"):
