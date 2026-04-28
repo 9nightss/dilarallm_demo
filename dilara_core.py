@@ -12,6 +12,10 @@ import urllib.error
 import xml.etree.ElementTree as ET
 import html as html_lib
 
+#this is an early iteration of the dilara project but this ui is specifically made for AR envoirnment 
+#which is the next in line on the developement cycle 
+#thats why this is here...
+
 
 try:
     from PIL import Image, ImageTk
