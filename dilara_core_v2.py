@@ -11,9 +11,9 @@ Routing logic:
 
 Requirements:
     pip install requests pyttsx3
-    pip install vosk sounddevice   (optional – offline speech input)
-    pip install SpeechRecognition  (optional – online speech fallback)
-    pip install Pillow             (optional – profile picture)
+    pip install vosk sounddevice   (optional  offline speech input)
+    pip install SpeechRecognition  (optional  online speech fallback)
+    pip install Pillow             (optional  profile picture)
     Ollama running + model pulled: ollama pull llama3.2:1b
 """
 
@@ -33,34 +33,37 @@ import urllib.error
 import xml.etree.ElementTree as ET
 import html as html_lib
 
+user = "Fatih"
+Admin = "Admin"
+
 try:
-    import requests
+    import requests #type:ignore
     REQUESTS_OK = True
 except ImportError:
     REQUESTS_OK = False
 
 try:
-    from PIL import Image, ImageTk
+    from PIL import Image, ImageTk #type:ignore
     PIL_OK = True
 except Exception:
     PIL_OK = False
 
 try:
-    import pyttsx3
+    import pyttsx3 #type:ignore
     TTS_OK = True
 except Exception as e:
     print("[WARN] pyttsx3 unavailable:", e)
     TTS_OK = False
 
 try:
-    import vosk
-    import sounddevice as sd
+    import vosk  #type:ignore
+    import sounddevice as sd #type:ignore
     VOSK_OK = True
 except Exception:
     VOSK_OK = False
 
 try:
-    import speech_recognition as sr
+    import speech_recognition as sr #type:ignore
     SR_OK = True
 except Exception:
     SR_OK = False
@@ -444,6 +447,9 @@ class VoiceManager:
 # ─────────────────────────────────────────────
 #  DIALOG BASE  (v1 personality — unchanged)
 # ─────────────────────────────────────────────
+
+#TODO: RESPONSES ARE MAİNLY WEAK THOSE ARE NEEDS TO BE THİNK ON İT AND SHOULD BE MORE NATURAL DİALOG BASED
+
 class DialogBase:
     """Keyword-intent router. Returns {"text": str, "intent": Optional[str]}"""
     def __init__(self, username="User"):
@@ -478,7 +484,7 @@ class DialogBase:
                     "Just a ghost in your machine. Nothing to worry about.",
                 ]
             },
-            ("plans", "what's next", "agenda", "schedule"): {
+            ("plans", "what's next", "agenda", "schedule"): { #TODO: ADD THE CALENDAR İNTEGRATİONS AND CALLBACK ROUTİNE
                 "text": [
                     "Same as always: listen, react, and maybe take over a few APIs.",
                     "Planning? I prefer improvisation. Keeps the data fresh.",
@@ -491,7 +497,7 @@ class DialogBase:
             ("what day", "today's date", "what date", "current date"): {
                 "text": ["__DATE__"]
             },
-            ("weather", "forecast", "temperature", "rain", "humidity", "wind"): {
+            ("weather", "forecast", "temperature", "rain", "humidity", "wind"): { #TODO: FİX İT LATER
                 "text": ["Pulling atmospheric data... one moment.",
                          "Checking the sky conditions for you.",
                          "Querying weather nodes..."],
@@ -503,14 +509,14 @@ class DialogBase:
                          "Pulling headlines now."],
                 "intent": "news_general"
             },
-            ("tech news", "technology news", "gadgets", "tech headlines"): {
+            ("tech news", "technology news", "gadgets", "tech headlines"): { #RSS FEED İS NEEDS TO BE RECHECKED 
                 "text": ["Tech stream incoming."], "intent": "news_tech"
             },
-            ("cybersecurity", "hacker news", "security news", "infosec"): {
+            ("cybersecurity", "hacker news", "security news", "infosec"): { #THOSE ARE NOT THE SİTES WE SELECTED NEEDS TO BE FİXED
                 "text": ["Threat intel channels warming up."], "intent": "news_security"
             },
             ("world news", "international", "global news"): {
-                "text": ["Tuning into world frequencies..."], "intent": "news_world"
+                "text": ["Tuning into world frequencies..."], "intent": "news_world" #FİX İT LATER
             },
             ("search", "google", "look up", "find", "search for"): {
                 "text": ["Running query...", "Initiating web sweep...",
@@ -518,13 +524,17 @@ class DialogBase:
                 "intent": "search"
             },
             ("databank", "archive", "records", "files", "link library", "url library"): {
-                "text": ["Opening Databank..."], "intent": "databank"
+                "text": ["Opening Databank..."], "intent": "databank"               
+                
+                #LOCAL LİBRARY İS FOR PRE-TRAİNİNG PURPOSES ONLY 
+                #BUT İT CAN BE USED AS CACHE PATH 
+            
             },
             ("navigation", "guide me", "ok, lead me", "lead me", "navigate"): {
                 "text": ["Navigation mode armed. Destination?"], "intent": "navigation"
             },
-            ("scan", "scanner", "trace", "nmap", "whois"): {
-                "text": ["Scan center is an external tool in later stages. Prepping logs."],
+            ("scan", "scanner", "trace", "nmap", "whois"): {  #TODO: Fill this with toolsets on the net edc folder
+                "text": ["Scan center is an external tool in later stages. Prepping logs."], 
                 "intent": "scan_external"
             },
             ("dspace", "dura space", "academic", "repository", "university database"): {
@@ -920,24 +930,59 @@ REGISTRY = {
         "Australia": ["http://eprints.utas.edu.au","http://dspace.uq.edu.au"],
     },
     "FTP": {
-        "Austria":   ["http://mirror.easyname.at"],
-        "Brazil":    ["http://ftp.lasca.ic.unicamp.br","http://linorg.usp.br"],
-        "Canada":    ["http://ctan.math.ca","http://mirror.its.dal.ca"],
-        "China":     ["http://mirrors.ustc.edu.cn"],
-        "France":    ["http://mirrors.ircam.fr"],
-        "Germany":   ["http://ftp.fau.de","http://ftp.gwdg.de","http://ftp.tuchemnitz.de"],
-        "Greece":    ["http://ftp.ntua.gr"],
-        "Japan":     ["http://ftp.jaist.ac.jp","http://ftp.kddilabs.jp"],
-        "Netherlands":["http://ftp.snt.utwente.nl"],
-        "USA":       ["http://ftp.gnu.org","http://ftp.ubuntu.com"],
+        "Algeria":           ["http://ctan.epsttlemcen.dz"],
+        "Australia":         ["http://encomwireless.com","http://encomkb.encom.com.au","http://encomsystems.com","http://encom.info"],
+        "Austria":           ["http://mirror.easyname.at"],
+        "Belarus":           ["http://mirror.datacenter.by"],
+        "Brazi":             ["http://ftp.lasca.ic.unicamp.br","http://linorg.usp.br"],
+        "Canada":            ["http://ctan.math.ca","http://ctan.mirror.rafal.ca","http://mirror.its.dal.ca","http://ftp.muug.ca"],
+        "China":             ["http://mirrors.ustc.edu.cn"],
+        "Costa Rica":        ["http://mirrors.ucr.ac.cr"],
+        "Czech Republic":    ["http://ftp.cvut.cz","http://mirrors.nic.cz"],
+        "Denmark":           ["http://mirrors.dotsrc.org"],
+        "Finland":           ["http://ftp.funet.fi"],
+        "France":            ["http://distribcoffee.ipsl.jussieu.fr","http://ftp.oleane.net","http://mirrors.ircam.fr"],
+        "Germany":           ["http://ftp.fau.de","http://ftp.fernunihagen.de","http://ftp.fuberlin.de","http://ftp.gwdg.de","http://ftp.mpisb.mpg.de","http://ftp.rrze.unierlangen.de","http://ftp.rrzn.unihannover.de","http://ftp.tuchemnitz.de","http://mirror.physikpool.tuberlin.de","http://sunsite.informatik.rwthaachen.de"],
+        "Greece":            ["http://ftp.cc.uoc.gr","http://ftp.ntua.gr"],
+        "Hong Kong":         ["http://ftp.cuhk.edu.hk"],
+        "Ireland":           ["http://ftp.heanet.ie"],
+        "Japan":             ["http://ftp.jaist.ac.jp","http://ftp.kddilabs.jp","http://ftp.uaizu.ac.jp"],
+        "Mexico":            ["http://ftp.leg.uct.ac.za"],
+        "Netherlands":       ["http://archive.cs.uu.nl","http://ctan.triasinformatica.nl","http://ftp.snt.utwente.nl"],
+        "New Zealand":       ["http://mirror.aut.ac.nz"],
+        "Norway":            ["http://ctan.uib.no"],
+        "Poland":            ["http://ftp.gust.org.pl","http://ftp.piotrkosoft.net","http://sunsite.icm.edu.pl"],
+        "Portugal":          ["http://ftp.di.uminho.pt","http://ftp.eq.uc.pt","http://ftp.ist.utl.pt","http://mirrors.fe.up.pt"],
+        "Russia":            ["http://ftp.kaspersky.ru","http://ftp.dante.de"],
+        "Saudi Arabia":      ["http://ftp.kau.edu.sa"],
+        "South Africa":      ["http://ftp.uct.ac.za"],
+        "South Korea":       ["http://ftp.korea.ac.kr"],
+        "Spain":             ["http://ftp.rediris.es","http://ftp.uspceu.es"],
+        "Sweden":            ["http://ftp.sunet.se"],
+        "Switzerland":       ["http://ftp.ch/ctan"],
+        "Taiwan":            ["http://ftp.csie.ntu.edu.tw"],
+        "United Kingdom":    ["http://ftp.mirrorservice.org"],
+        "USA":               ["http://ftp.gnu.org","http://ftp.ubuntu.com","http://ftp.microsoft.com"]
     },
     "CAMS": {
-        "NASA":        ["http://tarotchilivisit2.oamp.fr"],
-        "USA_College": ["http://rifwebcam.chem.psu.edu/",
-                        "http://buscam.uchicago.edu/view/index.shtml"],
-        "Russia":      ["http://camera.butovo.com/view/index.shtml"],
-        "Germany":     ["http://webcam.eins-energie.de/view/index.shtml"],
-        "Italy":       ["http://83.61.22.4:8080/view/viewer_index.shtml?id=0"],
+                "NASA":              ["http://tarotchilivisit2.oamp.fr","http://150.214.222.100/view/view.shtml?id=1070&imagepath=%2Fmjpg%2Fvideo.mjpg&size=1","http://www.runningmars.kuk.net/multimedia/webcams/view3.html","http://sidecam.obspm.fr/view/viewer_index.shtml?id=3826","http://tarot4.obs-azur.fr/view/view.shtml?id=6241&imagePath=/mjpg/video.mjpg&size=1"],
+                "CHINA":             ["http://59.146.77.13/Cgi?page=Single&Language=1","http://113.161.194.216:86/Cgi?page=Single&Mode=Refresh&Interval=3&Language=0","http://61.60.112.230/view/view.shtml?imagePath=/mjpg/2/video.mjpg&size=1","http://nav.ddo.jp:82/ViewerFrame?Mode=Motion&Language=0"],
+
+                "USA_COLLEGE":       ["http://janet.ing.unibs.it/","http://rifwebcam.chem.psu.edu/","http://cyclops.sunderland.ac.uk/view/index.shtml","http://trackfield.webcam.oregonstate.edu/axis-cgi/mjpg/video.cgi?resolution=800x600&amp%3Bdummy=1333689998337","http://128.196.12.29/axis-cgi/mjpg/video.cgi","http://buscam.uchicago.edu/view/index.shtml","http://mbewebcam.rhul.ac.uk/view/view.shtml?imagePath=/mjpg/video.mjpg&size=2","http://webcam01.ecn.purdue.edu/view/index.shtml","http://flightcam2.pr.erau.edu/view/view.shtml?id=3801&imagepath=%2Fmjpg%2Fvideo.mjpg&size=1"],
+                "USA_SECURITY":      ["http://115.42.155.199/view/indexFrame.shtml","http://flightcam2.pr.erau.edu/view/index.shtml","http://camera6.buffalotrace.com/view/index.shtml","http://87.54.59.228/view/index.shtml","http://202.208.150.120/ViewerFrame?Mode=Motion&Language=1","http://74.94.148.163:8080/ViewerFrame?Mode=Motion", "http://116.193.97.222/Cgi?page=Single&Language=1","http://24.240.181.138:8181/ViewerFrame?Mode=Motion&Resolution=640x480&Quality=Motion&Interval=30&Size=STD&PresetOperation=Move&Language=0","http://webcam.geodan.nl/","http://193.140.1.239:8080/xmlui/","http://205.167.90.185/view/viewer_index.shtml?id=4680","http://cam4.uridium.ch/Cgi?page=Single&Mode=Motion&Resolution=320x240&Quality=Motion&Interval=30&Size=STD&PresetOperation=Move&Language=0"],  
+                "USA_CORPO":         ["http://hadynbuild.cf.ac.uk/view/index.shtml","http://137.44.28.240/view/index.shtml","http://camera.buffalotrace.com/view/viewer_index.shtml?id=221430","http://218.219.195.243:8080/MultiCameraFrame?Mode=Motion&Language=0","http://193.138.213.169/Cgi?page=Single&Mode=Motion&Language=9","http://pendelcam.kip.uni-heidelberg.de/view/viewer_index.shtml?id=170059", "http://iut-info.univ-reims.fr/view/", "http://webcam.geodan.nl/", "http://flightcam2.pr.erau.edu/view/index.shtml", "http://67.53.162.163/index4.html", "http://200.36.58.250/view/index.shtml", "http://217.7.66.54/axis-cgi/mjpg/video.cgi?resolution=640x360&dummy=1423492017252", "http://200.36.58.250/view/index.shtml"],
+                "USA_OTHER":         ["http://129.15.81.9:8080/webcam.html","http://208.65.20.83/axis-cgi/mjpg/video.cgi?resolution=4cif&dummy=1344350498922","http://193.90.139.222:33450/axis-cgi/mjpg/video.cgi?resolution=800x450","http://62.168.0.189/axis-cgi/mjpg/video.cgi?resolution=4CIF&camera=1&dummy=1277833957855","http://64.122.208.241:8000/axis-cgi/mjpg/video.cgi?camera=&resolution=320x240","http://storatorg.halmstad.se/axis-cgi/mjpg/video.cgi?resolution=1280x800&dummy=1433493481969","http://82.139.167.140:3131/view/index.shtml","http://avptcam.uconn.edu/view/index.shtml","http://webcam.thealgonquin.com:8080/view/index.shtml","http://200.79.225.81:8080/view/view.shtml?id=608&imagePath=%2Fmjpg%2Fvideo.mjpg&size=1"],
+                              
+                        
+                        
+   
+                "RUSSIA":           ["http://92.50.128.90/axis-cgi/mjpg/video.swf?resolution=640x480&compression=30&dummy=1275773919735","http://212.42.54.137:8008/view/index.shtml","http://195.113.207.238/view/index.shtml","http://www.vladimir-city.ru:8080/view/index.shtml","http://myndavel.ma.is/view/index.shtml","http://webcam.st-malo.com/axis-cgi/mjpg/video.cgi?resolution=352x288","http://ppcam.gotdns.com:8000/axis-cgi/mjpg/video.cgi?resolution=2CIFEXP&dummy=1344349278882","http://89.162.72.203/axis-cgi/mjpg/video.cgi?resolution=CIF&dummy=1306400814056","http://195.235.198.107:3344/view/index.shtml","http://80.38.183.149:2000/view/index.shtml","http://camera.butovo.com/view/index.shtml","http://cam-cityhall1.delft.nl/view/view.shtml?id=782&imagepath=%2Fmjpg%2Fvideo.mjpg&size=1","http://213.196.182.244/view/index.shtml","http://195.74.79.83:30/view/index.shtml"],
+                "ISVERC":           ["http://wc-heli.chuv.ch/view/view.shtml","http://webcam-1.faxa.rvk.is/view/index.shtml","http://lv.raad.tartu.ee:10201/view/index.shtml","http://200.36.58.250/view/view.shtml?id=62&imagepath=%2Fmjpg%2F1%2Fvideo.mjpg&size=1","http://195.196.36.242/view/index.shtml","http://71.248.101.58:50001/CgiStart?page=Single&Language=0","http://195.196.35.91/view/view.shtml?id=565&imagePath=%2Fmjpg%2Fvideo.mjpg&size=1","http://lv.raad.tartu.ee:10201/view/index.shtml","http://200.36.58.250/view/view.shtml?id=62&imagepath=%2Fmjpg%2F1%2Fvideo.mjpg&size=1","http://195.196.36.242/view/index.shtml","http://71.248.101.58:50001/CgiStart?page=Single&Language=0","http://195.196.35.91/view/view.shtml?id=565&imagePath=%2Fmjpg%2Fvideo.mjpg&size=1"],
+                "HOLLAND":          ["http://loeffingencam.selfhost.eu/view/view.shtml?id=174&imagepath=%2Fmjpg%2F1%2Fvideo.mjpg&size=1","http://80.94.55.92/view/index.shtm"],
+                "ITALY":            ["http://camera.hcc.govt.nz/view/view.shtml","http://roccabella.asuscomm.com:9091/view/view.shtml?id=577&imagePath=/mjpg/video.mjpg&size=8&camera=1","http://webcam.st-malo.com/axis-cgi/mjpg/video.cgi?resolution=352x288","http://83.61.22.4:8080/view/viewer_index.shtml?id=0","http://ppcam.gotdns.com:8000/axis-cgi/mjpg/video.cgi?resolution=2CIFEXP&dummy=1344349278882","http://89.162.72.203/axis-cgi/mjpg/video.cgi?resolution=CIF&dummy=1306400814056","http://195.235.198.107:3344/view/index.shtml","http://cam-cityhall1.delft.nl/view/view.shtml?id=782&imagepath=%2Fmjpg%2Fvideo.mjpg&size=1"],
+                "GERMANY":          ["http://217.22.201.135/view/viewer_index.shtml?id=17222","http://webcam.ampere.inpg.fr/view/index.shtml","http://87.54.59.228/view/viewer_index.shtml?id=193","http://217.30.178.109:46744/view/index.shtml","http://217.78.137.43/view/index.shtml","http://cam.hintertuxerhof.at/view/index.shtml","http://webcam.eins-energie.de/view/index.shtml","http://217.22.201.135/view/viewer_index.shtml?id=17222","http://87.54.59.228/view/viewer_index.shtml?id=193","http://217.30.178.109:46744/view/index.shtml","http://tornet.no-ip.org/view/index.shtml","http://94.125.79.44/view/index.shtml","http://livecam.norran.se/view/viewer_index.shtml?id=34342"]
+               
+   
     },
     "DATABANK": {
         "Netrunner":   ["https://nullsignal.games","https://netrunnerdb.com",
@@ -1111,7 +1156,7 @@ class NodeManager:
 
     def _handle_scan_external(self, data=None):
         if self.ui:
-            self.ui.root.after(0, lambda: self.ui.append_sys("[Scanner] External scan tool planned for later stages."))
+            self.ui.root.after(0, lambda: self.ui.append_sys("[Scanner] External scan tool planned for later stages.")) #TODO: Replace this with toolsets on the net edc folder
 
     def _handle_exit(self, data=None):
         if self.ui: self.ui.root.after(0, self.ui.safe_exit)
