@@ -2542,7 +2542,7 @@ class VoiceManager:
 #  DIALOG BASE  (v1 personality — unchanged)
 # ─────────────────────────────────────────────
 
-#TODO:These hardcoded responses are weak we need to think on it and make them more natural dialog responses qqqqw
+#TODO:These hardcoded responses are weak we need to think on it and make them more natural dialog responses
 
 class DialogBase:
     """Keyword-intent router. Returns {"text": str, "intent": Optional[str]}"""
